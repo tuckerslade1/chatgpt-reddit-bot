@@ -5,6 +5,8 @@ import os
 import time
 from dotenv import load_dotenv
 
+# data source: https://huggingface.co/datasets/HuggingFaceGECLM/REDDIT_comments
+
 load_dotenv()
 
 # load reddit api credentials from .env file
