@@ -1,28 +1,36 @@
 import pandas as pd
 
-minimum_score = 100
+minimum_score = 600
 
-data = pd.read_parquet('../chatgpt-reddit-bot-data/eli5-00.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
-cleaned_data = pd.DataFrame(columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
+for i in range(17):
+    if i < 10:
+        data = pd.read_parquet('../chatgpt-reddit-bot-data/eli5-0' + str(i) + '.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
+    else:
+        data = pd.read_parquet('../chatgpt-reddit-bot-data/eli5-' + str(i) + '.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
 
-# cleaning data
+    cleaned_data = pd.DataFrame(columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
 
-# remove messages with score < minimum_score
-data['score'] = data['score'].astype(float) # ensure 'score' column is of type int or float
-cleaned_data = data[data['score'] >= minimum_score] # filter low scoring messages
+    # cleaning data
 
-# remove messages that are not top level comments
-# (parent_id starts with t3)
-cleaned_data = cleaned_data[cleaned_data['parent_id'].str[:2] == 't3']
+    # remove messages with score < minimum_score
+    data['score'] = data['score'].astype(float) # ensure 'score' column is of type int or float
+    cleaned_data = data[data['score'] >= minimum_score] # filter low scoring messages
 
-# remove edited messages
-cleaned_data = cleaned_data[cleaned_data['edited'] == 'False']
+    # remove messages that are not top level comments
+    # (parent_id starts with t3)
+    cleaned_data = cleaned_data[cleaned_data['parent_id'].str[:2] == 't3']
 
-# remove deleted messages
-cleaned_data = cleaned_data[cleaned_data['body'] != '[deleted]']
+    # remove edited messages
+    cleaned_data = cleaned_data[cleaned_data['edited'] == 'False']
 
-# remove messages created by automoderator
-cleaned_data = cleaned_data[cleaned_data['author'] != 'AutoModerator']
+    # remove deleted messages
+    cleaned_data = cleaned_data[cleaned_data['body'] != '[deleted]']
 
-# create output json file
-cleaned_data.to_json('cleaned_data_00.json', orient='records', lines=True)
+    # remove messages created by automoderator
+    cleaned_data = cleaned_data[cleaned_data['author'] != 'AutoModerator']
+
+    # create output json file
+    if i < 10:
+        cleaned_data.to_json('cleaned_data_0' + str(i) + '.json', orient='records', lines=True)
+    else:
+        cleaned_data.to_json('cleaned_data_' + str(i) + '.json', orient='records', lines=True)
