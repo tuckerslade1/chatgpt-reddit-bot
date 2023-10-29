@@ -1,6 +1,5 @@
 import pandas as pd
 import requests
-import json
 import os
 import time
 from dotenv import load_dotenv
@@ -16,15 +15,16 @@ user_agent = os.getenv('USER_AGENT')
 reddit_username = os.getenv('REDDIT_USERNAME')
 reddit_password = os.getenv('REDDIT_PASSWORD')
 
-minimum_score = 25 # minimum score (upvotes-downvotes) for a comment to be included in the dataset
+minimum_score = 1000 # minimum score (upvotes-downvotes) for a comment to be included in the dataset
 
+def format_row(row):
+    return {"messages": [{"role": "system", "content": "You are a friendly, knowledgeable Reddit user explaining a concept in simple terms."},{"role": "user", "content": row['parent_content']},{"role": "assistant", "content": row['body']}]
+}
 
-# iterate through all 17 parquet files
+# clean and obtain parent content for each file
+
 for file_num in range(17):
-    if file_num < 10:
-        data = pd.read_parquet('../chatgpt-reddit-bot-data/eli5-0' + str(file_num) + '.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
-    else:
-        data = pd.read_parquet('../chatgpt-reddit-bot-data/eli5-' + str(file_num) + '.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
+    data = pd.read_parquet(f'../chatgpt-reddit-bot-data/eli5-{str(file_num).zfill(2)}.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
 
     # create empty dataframe to store cleaned data
     cleaned_data = pd.DataFrame(columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
@@ -130,19 +130,20 @@ for file_num in range(17):
     # delete parent_id column
     cleaned_data = cleaned_data.drop(columns=['parent_id'])
 
-    # rename body column to completion
-    cleaned_data = cleaned_data.rename(columns={'body': 'completion'})
+    cleaned_data['formatted_data'] = cleaned_data.apply(format_row, axis=1)
 
-    # rename parent_content column to prompt
-    cleaned_data = cleaned_data.rename(columns={'parent_content': 'prompt'})
-
-    # swap positions of input and output columns
-    cleaned_data = cleaned_data[['prompt', 'completion']]
 
     # create output json file
-    if file_num < 10:
-        cleaned_data.to_json('cleaned_data_0' + str(file_num) + '.json', orient='records', lines=True)
-    else:
-        cleaned_data.to_json('cleaned_data_' + str(file_num) + '.json', orient='records', lines=True)
-
+    cleaned_data['formatted_data'].to_json(f'cleaned_data_{str(file_num).zfill(2)}.jsonl', orient='records', lines=True)
     print('Finished cleaning data for file ' + str(file_num+1) + ' of 17')
+
+# aggregate all json files into one
+filenames = [f'cleaned_data_{str(i).zfill(2)}.jsonl' for i in range(17)]
+combined_filename = 'aggregate_data.jsonl'
+
+# Combining the files
+with open(combined_filename, 'w') as combined_file:
+    for filename in filenames:
+        with open(filename, 'r') as f:
+            for line in f:
+                combined_file.write(line)
