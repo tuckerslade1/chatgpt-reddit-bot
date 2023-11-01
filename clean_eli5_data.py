@@ -24,7 +24,7 @@ def format_row(row):
 # clean and obtain parent content for each file
 
 for file_num in range(17):
-    data = pd.read_parquet(f'../chatgpt-reddit-bot-data/eli5-{str(file_num).zfill(2)}.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
+    data = pd.read_parquet(f'../explainlikeimfive/chatgpt-reddit-bot-data/eli5-{str(file_num).zfill(2)}.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
 
     # create empty dataframe to store cleaned data
     cleaned_data = pd.DataFrame(columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
