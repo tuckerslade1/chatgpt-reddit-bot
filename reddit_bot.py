@@ -5,18 +5,19 @@ import openai
 import datetime
 import time
 import pytz
+import random
 
 load_dotenv()
 eastern = pytz.timezone('US/Eastern')
 
-# todo: add models for more subreddits, move script to cloud to run 24/7, document process on personal website
+# todo: add models for more subreddits, move script to cloud to run 24/7, add conversation following and replying to replies, delete comments that get downvoted, document process on personal website
 
-eli5_model = 'ft:gpt-3.5-turbo-0613:personal::8EpKrng8'
-eli5_system_message = 'You are a friendly, knowledgeable Reddit user explaining a concept in simple terms. Please do not include hyperlinks in your reply.'
+eli5_model = os.getenv('EXPLAINLIKEIMFIVE_MODEL')
+eli5_system_message = 'You are a friendly, knowledgeable Reddit user explaining a concept in simple terms. Please do not include hyperlinks or edit messages in your reply, or provide details about your life as if you are a real person.'
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 min_post_score = 4 # minimum score (upvotes-downvotes) for a post to be replied to
-max_post_comments = 15 # maximum number of comments for a post to be replied to
+max_post_comments = 35 # maximum number of comments for a post to be replied to
 min_post_age = 60*4 # minimum age of post in seconds to be replied to (4 minutes)
 max_post_age = 60*60*24 # maximum age of post in seconds to be replied to (24 hours)
 
@@ -45,10 +46,6 @@ def main():
         # trying to select posts that are interesting, relatively new and not flooded with replies
         if submission.id not in replied_posts and submission.score >= min_post_score and submission.num_comments <= max_post_comments and datetime.datetime.now().timestamp() - submission.created_utc >= min_post_age and datetime.datetime.now().timestamp() - submission.created_utc <= max_post_age:
             process_submission(submission)
-            replied_posts.add(submission.id)
-            with open('replied_posts.txt', 'a') as f:  # Append the post ID to the file
-                f.write(f"{submission.id}\n")
-            time.sleep(180) # at least 3 minutes between posts to avoid spamming
 
 
 def process_submission(submission):
@@ -57,10 +54,16 @@ def process_submission(submission):
     reply_text = generate_reply(prompt, eli5_model, eli5_system_message)
     current_time = datetime.datetime.now(eastern).strftime("%I:%M%p")
     if reply_text:
-        print(f"{current_time}:   Replying to: {submission.title}\n{submission.url}")
+        print(f"{current_time}:   Replying to:   {submission.id} - {submission.title}")
+        print(f"{current_time}:   Reply:   {reply_text}")
         submission.reply(reply_text)
+        replied_posts.add(submission.id)
+        with open('replied_posts.txt', 'a') as f:  # Append the post ID to the file
+            f.write(f"{submission.id}\n")
+        time.sleep(random.randint(60*15, 60*20)) # wait 15-20 minutes before checking for new posts
     else:
         print(f"{current_time}:   Failed to reply to: {submission.title}")
+        print(f"{current_time}:   Reason:   Reply was incomplete.")
 
 
 def generate_reply(prompt, model_id, system_instruction=None, max_tokens=512):
