@@ -25,6 +25,7 @@ def format_row(row):
 }
 
 # clean and obtain parent content for each file
+print('Cleaning data...')
 
 for file_num in range(num_parquets):
     data = pd.read_parquet(f'{subreddit_path}/parquets/{subreddit_name}-{str(file_num).zfill(2)}.parquet', columns=['author', 'body', 'created_utc', 'edited', 'parent_id', 'score'])
