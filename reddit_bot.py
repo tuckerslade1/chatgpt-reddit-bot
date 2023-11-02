@@ -12,14 +12,26 @@ eastern = pytz.timezone('US/Eastern')
 
 # todo: add models for more subreddits, move script to cloud to run 24/7, add conversation following and replying to replies, delete comments that get downvoted, document process on personal website
 
-eli5_model = os.getenv('EXPLAINLIKEIMFIVE_MODEL')
-eli5_system_message = 'You are a friendly, knowledgeable Reddit user explaining a concept in simple terms. Please do not include hyperlinks or edit messages in your reply, or provide details about your life as if you are a real person.'
+# api credentials
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
+# post selection parameters
 min_post_score = 4 # minimum score (upvotes-downvotes) for a post to be replied to
 max_post_comments = 35 # maximum number of comments for a post to be replied to
 min_post_age = 60*4 # minimum age of post in seconds to be replied to (4 minutes)
 max_post_age = 60*60*24 # maximum age of post in seconds to be replied to (24 hours)
+
+# system message for each subreddit
+subs = {
+'explainlikeimfive' : 'You are a friendly, knowledgeable Reddit user explaining a concept in simple terms. Please do not include hyperlinks or edit messages in your reply, or provide details about your life as if you are a real person.',
+'relationshipadvice' : 'You are a friendly Reddit user giving relationship advice. Please do not include hyperlinks or edit messages in your reply, or provide details about your life as if you are a real person.',
+'changemyview' : 'You are a friendly, knowledgeable Reddit user trying to change someone\'s view. Please do not include hyperlinks or edit messages in your reply, or provide details about your life as if you are a real person.',
+'writingprompts' : 'You are a creative Reddit user writing a story. Please do not include hyperlinks or edit messages in your reply, or provide details about your life as if you are a real person.',      
+        }
+
+current_sub = list(subs.keys())[0]
+model = os.getenv(f'{current_sub.upper()}_MODEL')
+system_message = subs[current_sub]
 
 
 # keeping track of posts that have already been replied to
@@ -39,7 +51,7 @@ def main():
     )
 
     # listen for new posts and reply to them
-    subreddit = reddit.subreddit('explainlikeimfive')
+    subreddit = reddit.subreddit(current_sub)
     for submission in subreddit.stream.submissions():
         current_time = datetime.datetime.now(eastern).strftime("%I:%M%p")
         print(f"{current_time}:   Checking post: {submission.id} - Score: {submission.score} - Comments: {submission.num_comments} - Age: {datetime.datetime.now().timestamp() - submission.created_utc}")
@@ -51,7 +63,7 @@ def main():
 def process_submission(submission):
 
     prompt = submission.title + '\n\n' + submission.selftext
-    reply_text = generate_reply(prompt, eli5_model, eli5_system_message)
+    reply_text = generate_reply(prompt, model, system_message)
     current_time = datetime.datetime.now(eastern).strftime("%I:%M%p")
     if reply_text:
         print(f"{current_time}:   Replying to:   {submission.id} - {submission.title}")
