@@ -15,13 +15,15 @@ user_agent = os.getenv('CLEANER_USER_AGENT')
 username = os.getenv('CLEANER_REDDIT_USERNAME')
 password = os.getenv('CLEANER_REDDIT_PASSWORD')
 
-minimum_score = 1000 # minimum score (upvotes-downvotes) for a comment to be included in the dataset
-subreddit_name = input('Enter subreddit name (ex. explainlikeimfive):\n')
+subreddit_name = input('Enter subreddit name (ex. explainlikeimfive): ')
+system_message = input('Enter system message (ex. You are a friendly, knowledgeable Reddit user explaining a concept in simple terms.): ')
+num_parquets = int(input('Enter number of parquet files to clean: '))
+
+minimum_score = 100 # minimum score (upvotes-downvotes) for a comment to be included in the dataset
 subreddit_path = f'../chatgpt-reddit-bot-data/{subreddit_name}'
-num_parquets = 10
 
 def format_row(row):
-    return {"messages": [{"role": "system", "content": "You are a friendly, knowledgeable Reddit user explaining a concept in simple terms."},{"role": "user", "content": row['parent_content']},{"role": "assistant", "content": row['body']}]
+    return {"messages": [{"role": "system", "content": system_message},{"role": "user", "content": row['parent_content']},{"role": "assistant", "content": row['body']}]
 }
 
 # clean and obtain parent content for each file
