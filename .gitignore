@@ -3,3 +3,4 @@
 .env
 *.jsonl
 replied_posts.txt
+logs.txt
