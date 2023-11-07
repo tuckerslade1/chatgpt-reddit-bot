@@ -55,7 +55,7 @@ def main():
         password = os.getenv('REPLYER_REDDIT_PASSWORD'),
     )
 
-    current_sub = list(subs.keys())[1]
+    current_sub = list(subs.keys())[0]
     subreddit = reddit.subreddit(current_sub)
     # listen for new posts and reply to them
     while True:
@@ -92,7 +92,7 @@ def main():
                 process_submission(submission, current_sub)
                 break
 
-        current_sub = list(subs.keys())[random.randint(0, 1)]
+        current_sub = list(subs.keys())[0]
         subreddit = reddit.subreddit(current_sub)
         sleep_time = random.randint(180, 361)
         log(f"{current_time}:   Next sub: {current_sub} - Sleeping for {sleep_time} seconds...\n")
