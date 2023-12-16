@@ -54,10 +54,10 @@ def main():
         username = os.getenv('REPLYER_REDDIT_USERNAME'),
         password = os.getenv('REPLYER_REDDIT_PASSWORD'),
     )
-
     current_sub = list(subs.keys())[0]
     subreddit = reddit.subreddit(current_sub)
-    # listen for new posts and reply to them
+
+    # listen for new posts and reply
     while True:
         current_time = datetime.datetime.now(eastern).strftime("%c")
         log(f"{current_time}:   Sorting posts in {current_sub} by hot...")
@@ -69,7 +69,6 @@ def main():
             posted = False
             current_time = datetime.datetime.now(eastern).strftime("%c")
             log(f"{current_time}:   Checking post: {submission.id} - Subreddit: {current_sub} Score: {submission.score} - Comments: {submission.num_comments} - Age: {datetime.datetime.now().timestamp() - submission.created_utc}")
-            # trying to select posts that are interesting, relatively new and not flooded with replies
             if submission.id not in replied_posts and submission.score >= min_post_score and submission.num_comments <= max_post_comments and datetime.datetime.now().timestamp() - submission.created_utc >= min_post_age and datetime.datetime.now().timestamp() - submission.created_utc <= max_post_age:
                 process_submission(submission, current_sub)
                 posted = True
